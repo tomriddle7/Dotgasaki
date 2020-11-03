@@ -1,6 +1,16 @@
 # dotgasaki
 
-DotLive for Nijigasaki
+도트라이브 니지동 버전입니다.
+
+위젯 기능은 네이티브 건드려야 해서 어렵습니다.
+
+빌드
+
+iOS: Xcode 설치 후 빌드 메뉴에서 빌드
+
+안드로이드: 안드로이드 스튜디오 깔고 Build -> Flutter 탭에서 build apk
+
+도트 출처: 포크랑도트가제일좋아
 
 ## Getting Started
 

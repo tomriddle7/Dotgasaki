@@ -54,7 +54,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   Timer _timer;
 
-  List<String> diffBirth = ['', '', '', '', '', '', '', '', '', ''];
+  List<String> diffBirth = [];
 
   final _pageController = PageController();
   final _currentPageNotifier = ValueNotifier<int>(0);
@@ -161,6 +161,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   initState() {
     super.initState();
+    BetweenDate();
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       BetweenDate();
     });

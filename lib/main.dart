@@ -150,7 +150,7 @@ class _MyHomePageState extends State<MyHomePage> {
         diffMinute = difference.inMinutes % 60 == 0 ? 0 : 60 - (difference.inMinutes % 60);
         diffSecond = difference.inSeconds % 60 == 0 ? 0 : 60 - (difference.inSeconds % 60);
 
-        tempString = (diffDay + 1).toString() + '일 ' + diffHour.toString().padLeft(2, '0') + ':' + diffMinute.toString().padLeft(2, '0') + ':' + diffSecond.toString().padLeft(2, '0');
+        tempString = diffDay.toString() + '일 ' + diffHour.toString().padLeft(2, '0') + ':' + diffMinute.toString().padLeft(2, '0') + ':' + diffSecond.toString().padLeft(2, '0');
       }
       setState(() {
         diffBirth.add(tempString);

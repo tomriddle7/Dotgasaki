@@ -54,7 +54,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   Timer _timer;
 
+  List<String> birthWeekday = ['월', '화', '수', '목', '금', '토', '일'] ;
   List<String> diffBirth = [];
+  List<String> nijidongWeekday = [];
 
   final _pageController = PageController();
   final _currentPageNotifier = ValueNotifier<int>(0);
@@ -124,6 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void BetweenDate() {
     diffBirth = [];
+    nijidongWeekday = [];
     var tempString = '';
     for (int i = 0; i < nijidongList.length; i++) {
       final year = DateTime.now().year;
@@ -154,6 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       setState(() {
         diffBirth.add(tempString);
+        nijidongWeekday.add(birthWeekday[birthday.weekday - 1]);
       });
     }
   }
@@ -191,7 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             nijidongList[i]['image']
                         ),
                         Text(
-                          nijidongList[i]['birthM'].toString() + '월\n' + nijidongList[i]['birthD'].toString() + '일',
+                          '${nijidongList[i]['birthM']}월\n${nijidongList[i]['birthD']}일\n(${nijidongWeekday[i]})',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,

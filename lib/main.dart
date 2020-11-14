@@ -125,12 +125,13 @@ class _MyHomePageState extends State<MyHomePage> {
   ];
 
   void BetweenDate() {
+    var tempString = '';
+    final date2 = DateTime.now();
+    final year = date2.year;
+
     diffBirth = [];
     nijidongWeekday = [];
-    var tempString = '';
     for (int i = 0; i < nijidongList.length; i++) {
-      final year = DateTime.now().year;
-      final date2 = DateTime.now();
       var birthday = DateTime(year, nijidongList[i]['birthM'], nijidongList[i]['birthD']);
       var difference = date2.difference(birthday);
       var diffDay = difference.inDays;

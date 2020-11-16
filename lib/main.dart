@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:page_view_indicators/page_view_indicators.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(MyApp());
@@ -54,7 +55,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   Timer _timer;
 
+  List<String> birthWeekday = ['월', '화', '수', '목', '금', '토', '일'] ;
   List<String> diffBirth = [];
+  List<String> nijidongWeekday = [];
 
   final _pageController = PageController();
   final _currentPageNotifier = ValueNotifier<int>(0);
@@ -123,11 +126,13 @@ class _MyHomePageState extends State<MyHomePage> {
   ];
 
   void BetweenDate() {
-    diffBirth = [];
     var tempString = '';
+    final date2 = DateTime.now();
+    final year = date2.year;
+
+    diffBirth = [];
+    nijidongWeekday = [];
     for (int i = 0; i < nijidongList.length; i++) {
-      final year = DateTime.now().year;
-      final date2 = DateTime.now();
       var birthday = DateTime(year, nijidongList[i]['birthM'], nijidongList[i]['birthD']);
       var difference = date2.difference(birthday);
       var diffDay = difference.inDays;
@@ -154,6 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       setState(() {
         diffBirth.add(tempString);
+        nijidongWeekday.add(birthWeekday[birthday.weekday - 1]);
       });
     }
   }
@@ -169,6 +175,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<Center> WidgetList() {
     List<Center> res = [];
+    // 캐릭터 데이터 추가.
     for (int i = 0; i < nijidongList.length; i++) {
       Center box = Center(
           child: Stack(
@@ -178,7 +185,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     nijidongList[i]['image'],
                     width: 1000,
                     height: 1000,
-                    fit:BoxFit.cover,
+                    fit: BoxFit.cover,
                     color: Color.fromRGBO(255, 255, 255, 0.5),
                     colorBlendMode: BlendMode.modulate
                 ),
@@ -186,16 +193,17 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         Image.asset(
                             nijidongList[i]['image']
                         ),
                         Text(
-                          nijidongList[i]['birthM'].toString() + '월\n' + nijidongList[i]['birthD'].toString() + '일',
+                          '${nijidongList[i]['birthM']}월\n${nijidongList[i]['birthD']}일\n(${nijidongWeekday[i]})',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
-                            fontSize: 48,
+                            fontSize: 45,
                           ),
                         ),
                       ],
@@ -210,12 +218,49 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                   ],
-                )
+                ),
               ]
           )
       );
       res.add(box);
     }
+    // 개인 프로필 추가.
+    Center box = Center(
+      child: Container(
+        alignment: Alignment(0.0, 0.0),
+        color: Color.fromARGB(255, 23, 63, 123),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Image.asset(
+                'assets/nijidong_yuu1@2x.png'
+            ),
+            Text(
+              'tomriddle7',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 45,
+              ),
+            ),
+            InkWell(
+              onTap: () async {
+                await launch('https://twitter.com/tomriddle7', forceWebView: true, forceSafariVC: true);
+              },
+              child: Text(
+                '@tomriddle7',
+                style: TextStyle(
+                  color: Colors.lightBlueAccent,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 32,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    res.add(box);
     return res;
   }
 
@@ -229,7 +274,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: CirclePageIndicator(
           dotColor: Colors.white70,
           selectedDotColor: Colors.redAccent,
-          itemCount: nijidongList.length,
+          itemCount: nijidongList.length + 1,
           currentPageNotifier: _currentPageNotifier,
         ),
       ),

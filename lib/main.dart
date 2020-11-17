@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:page_view_indicators/page_view_indicators.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:home_widget/home_widget.dart';
 
 void main() {
   runApp(MyApp());
@@ -161,6 +163,7 @@ class _MyHomePageState extends State<MyHomePage> {
         diffBirth.add(tempString);
         nijidongWeekday.add(birthWeekday[birthday.weekday - 1]);
       });
+      _sendAndUpdate();
     }
   }
 
@@ -171,6 +174,21 @@ class _MyHomePageState extends State<MyHomePage> {
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       BetweenDate();
     });
+  }
+
+  Future<void> _sendData() async {
+    try {
+      return Future.wait([
+        HomeWidget.saveWidgetData<String>('Title', 'LoveLive'),
+        HomeWidget.saveWidgetData<String>('Message', 'is Best'),
+      ]);
+    } on PlatformException catch (exception) {
+      debugPrint('Error Sending Data. $exception');
+    }
+  }
+
+  Future<void> _sendAndUpdate() async {
+    await _sendData();
   }
 
   List<Center> WidgetList() {

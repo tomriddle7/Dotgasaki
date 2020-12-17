@@ -134,13 +134,16 @@ class _MyHomePageState extends State<MyHomePage> {
       var diffHour = difference.inHours % 24 == 0 ? 0 : 24 - (difference.inHours % 24);
       var diffMinute = difference.inMinutes % 60 == 0 ? 0 : 60 - (difference.inMinutes % 60);
       var diffSecond = difference.inSeconds % 60 == 0 ? 0 : 60 - (difference.inSeconds % 60);
-      if (diffDay < 0) {
+      if (difference.inHours <= 24 && difference.inHours >= 0) {
+        tempString = '생일이에요!\n축하합니다!';
+      }
+      else if (difference.inHours < 24) {
         diffDay *= -1;
 
-        tempString = (diffDay + 1).toString() + '일 ' + diffHour.toString().padLeft(2, '0') + ':' + diffMinute.toString().padLeft(2, '0') + ':' + diffSecond.toString().padLeft(2, '0');
+        tempString = diffDay.toString() + '일 ' + diffHour.toString().padLeft(2, '0') + ':' + diffMinute.toString().padLeft(2, '0') + ':' + diffSecond.toString().padLeft(2, '0');
       }
-      else if (diffDay > 0) {
-        birthday = DateTime(year+1, nijidongList[i]['birthM'], nijidongList[i]['birthD']);
+      else if (difference.inHours > 0) {
+        birthday = DateTime(year + 1, nijidongList[i]['birthM'], nijidongList[i]['birthD']);
         difference = date2.difference(birthday);
         diffDay = difference.inDays * -1;
         diffHour = difference.inHours % 24 == 0 ? 0 : 24 - (difference.inHours % 24);
@@ -148,9 +151,6 @@ class _MyHomePageState extends State<MyHomePage> {
         diffSecond = difference.inSeconds % 60 == 0 ? 0 : 60 - (difference.inSeconds % 60);
 
         tempString = (diffDay + 1).toString() + '일 ' + diffHour.toString().padLeft(2, '0') + ':' + diffMinute.toString().padLeft(2, '0') + ':' + diffSecond.toString().padLeft(2, '0');
-      }
-      else {
-        tempString = '생일이에요!\n축하합니다!';
       }
       setState(() {
         diffBirth.add(tempString);

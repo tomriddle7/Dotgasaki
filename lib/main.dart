@@ -76,6 +76,12 @@ class _MyHomePageState extends State<MyHomePage> {
       'image': 'assets/nijidong_emma1@2x.png'
     },
     {
+      'name': 'Zhoung Lanzhu',
+      'birthM': 2,
+      'birthD': 15,
+      'image': 'assets/nijidong_lanzhu1@2x.png'
+    },
+    {
       'name': 'Uehara Ayumu',
       'birthM': 3,
       'birthD': 1,
@@ -116,6 +122,12 @@ class _MyHomePageState extends State<MyHomePage> {
       'birthM': 11,
       'birthD': 13,
       'image': 'assets/nijidong_rina1@2x.png'
+    },
+    {
+      'name': 'Mia Taylor',
+      'birthM': 12,
+      'birthD': 6,
+      'image': 'assets/nijidong_mia1@2x.png'
     },
     {
       'name': 'Konoe Kanata',
@@ -245,7 +257,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             InkWell(
               onTap: () async {
-                await launch('https://twitter.com/tomriddle7', forceWebView: true, forceSafariVC: true);
+                await launch('https://twitter.com/tomriddle7', forceWebView: true, enableJavaScript: true, forceSafariVC: true);
               },
               child: Text(
                 '@tomriddle7',

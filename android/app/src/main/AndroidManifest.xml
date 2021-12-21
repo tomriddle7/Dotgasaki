@@ -9,13 +9,6 @@
         android:name="io.flutter.app.FlutterApplication"
         android:label="도트라이브*"
         android:icon="@mipmap/ic_launcher">
-        <receiver android:name="HomeWidgetExampleProvider" >
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data android:name="android.appwidget.provider"
-                android:resource="@xml/home_widget_example" />
-        </receiver>
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

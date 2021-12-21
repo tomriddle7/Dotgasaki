@@ -29,7 +29,6 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   page_view_indicators: ^1.4.0
   url_launcher: 5.4.11
-  home_widget: ^0.0.1+2
   cupertino_icons: ^1.0.0
 
 dev_dependencies:

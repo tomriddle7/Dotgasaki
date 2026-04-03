@@ -1,322 +1,387 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
-import 'package:page_view_indicators/page_view_indicators.dart';
+import 'dart:convert';
+import 'package:home_widget/home_widget.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 import 'package:url_launcher/url_launcher.dart';
 
-void main() {
-  runApp(MyApp());
+// 로컬 알림 플러그인 전역 초기화
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+void main() async {
+  // 플러터 엔진과 위젯 바인딩 초기화 보장 (비동기 작업을 위해 필수)
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 타임존 및 알림 설정 초기화
+  tz.initializeTimeZones();
+  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings();
+  const InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+    iOS: initializationSettingsIOS,
+  );
+  await flutterLocalNotificationsPlugin.initialize(
+    settings: initializationSettings,
+  );
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'DotLive*',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-        // This makes the visual density adapt to the platform that you run
-        // the app on. For desktop platforms, the controls will be smaller and
-        // closer together (more dense) than on mobile platforms.
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true, // Material 3 최신 디자인 적용
       ),
-      home: MyHomePage(title: 'DotLive*'),
+      home: const MyHomePage(title: 'DotLive*'),
+    );
+  }
+}
+
+// 아이돌 멤버 데이터 모델
+class IdolMember {
+  final String name;
+  final int birthMonth;
+  final int birthDay;
+  final String image;
+
+  IdolMember({
+    required this.name,
+    required this.birthMonth,
+    required this.birthDay,
+    required this.image,
+  });
+
+  // JSON 파싱용 팩토리 생성자
+  factory IdolMember.fromJson(Map<String, dynamic> json) {
+    return IdolMember(
+      name: json['name'],
+      birthMonth: json['month'],
+      birthDay: json['day'],
+      image: json['image'],
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
+  const MyHomePage({super.key, required this.title});
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Timer _timer;
+  final List<String> birthWeekday = ['월', '화', '수', '목', '금', '토', '일'];
 
-  List<String> birthWeekday = ['월', '화', '수', '목', '금', '토', '일'] ;
-  List<String> diffBirth = [];
-  List<String> nijidongWeekday = [];
+  List<IdolMember> nijidongList = [];
+  bool isLoading = true; // JSON 로딩 상태 관리
 
-  final _pageController = PageController();
-  final _currentPageNotifier = ValueNotifier<int>(0);
+  late PageController _pageController;
+  final ValueNotifier<int> _currentPageNotifier = ValueNotifier<int>(0);
+  final ValueNotifier<DateTime> _currentTimeNotifier = ValueNotifier<DateTime>(DateTime.now());
+  Timer? _timer;
 
-  var nijidongList = [
-    {
-      'name': 'Nakasu Kasumi',
-      'birthM': 1,
-      'birthD': 23,
-      'image': 'assets/nijidong_kasumi1@2x.png'
-    },
-    {
-      'name': 'Emma Berde',
-      'birthM': 2,
-      'birthD': 5,
-      'image': 'assets/nijidong_emma1@2x.png'
-    },
-    {
-      'name': 'Zhoung Lanzhu',
-      'birthM': 2,
-      'birthD': 15,
-      'image': 'assets/nijidong_lanzhu1@2x.png'
-    },
-    {
-      'name': 'Uehara Ayumu',
-      'birthM': 3,
-      'birthD': 1,
-      'image': 'assets/nijidong_ayumu1@2x.png'
-    },
-    {
-      'name': 'Osaka Shizuku',
-      'birthM': 4,
-      'birthD': 3,
-      'image': 'assets/nijidong_shizuku1@2x.png'
-    },
-    {
-      'name': 'Miyashita Ai',
-      'birthM': 5,
-      'birthD': 30,
-      'image': 'assets/nijidong_ai1@2x.png'
-    },
-    {
-      'name': 'Asaka Karin',
-      'birthM': 6,
-      'birthD': 29,
-      'image': 'assets/nijidong_karin1@2x.png'
-    },
-    {
-      'name': 'Yuuki Setsuna',
-      'birthM': 8,
-      'birthD': 8,
-      'image': 'assets/nijidong_setsuna1@2x.png'
-    },
-    {
-      'name': 'Mifune Shioriko',
-      'birthM': 10,
-      'birthD': 5,
-      'image': 'assets/nijidong_shioriko1@2x.png'
-    },
-    {
-      'name': 'Tennoji Rina',
-      'birthM': 11,
-      'birthD': 13,
-      'image': 'assets/nijidong_rina1@2x.png'
-    },
-    {
-      'name': 'Mia Taylor',
-      'birthM': 12,
-      'birthD': 6,
-      'image': 'assets/nijidong_mia1@2x.png'
-    },
-    {
-      'name': 'Konoe Kanata',
-      'birthM': 12,
-      'birthD': 16,
-      'image': 'assets/nijidong_kanata1@2x.png'
-    }
-  ];
-
-  void BetweenDate() {
-    var tempString = '';
-    final date2 = DateTime.now();
-    final year = date2.year;
-
-    diffBirth = [];
-    nijidongWeekday = [];
-    for (int i = 0; i < nijidongList.length; i++) {
-      var birthday = DateTime(year, nijidongList[i]['birthM'], nijidongList[i]['birthD']);
-      var difference = date2.difference(birthday);
-      var diffDay = difference.inDays;
-      var diffHour = difference.inHours % 24 == 0 ? 0 : 24 - (difference.inHours % 24);
-      var diffMinute = difference.inMinutes % 60 == 0 ? 0 : 60 - (difference.inMinutes % 60);
-      var diffSecond = difference.inSeconds % 60 == 0 ? 0 : 60 - (difference.inSeconds % 60);
-      if (difference.inSeconds < 86400 && difference.inSeconds >= 0) {
-        tempString = '생일이에요!\n축하합니다!';
-      }
-      else if (difference.inSeconds < 0) {
-        diffDay *= -1;
-
-        tempString = diffDay.toString() + '일 ' + diffHour.toString().padLeft(2, '0') + ':' + diffMinute.toString().padLeft(2, '0') + ':' + diffSecond.toString().padLeft(2, '0');
-      }
-      else {
-        birthday = DateTime(year + 1, nijidongList[i]['birthM'], nijidongList[i]['birthD']);
-        difference = date2.difference(birthday);
-        diffDay = difference.inDays * -1;
-        diffHour = difference.inHours % 24 == 0 ? 0 : 24 - (difference.inHours % 24);
-        diffMinute = difference.inMinutes % 60 == 0 ? 0 : 60 - (difference.inMinutes % 60);
-        diffSecond = difference.inSeconds % 60 == 0 ? 0 : 60 - (difference.inSeconds % 60);
-
-        tempString = diffDay.toString() + '일 ' + diffHour.toString().padLeft(2, '0') + ':' + diffMinute.toString().padLeft(2, '0') + ':' + diffSecond.toString().padLeft(2, '0');
-      }
-      setState(() {
-        diffBirth.add(tempString);
-        nijidongWeekday.add(birthWeekday[birthday.weekday - 1]);
-      });
-    }
+  @override
+  void initState() {
+    super.initState();
+    _loadMembersData(); // 비동기로 데이터 불러오기 시작
   }
 
   @override
-  initState() {
-    super.initState();
-    BetweenDate();
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      BetweenDate();
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    _currentPageNotifier.dispose();
+    _currentTimeNotifier.dispose();
+    super.dispose();
+  }
+
+  // JSON 파일에서 데이터를 읽어오고 초기 설정을 진행하는 함수
+  Future<void> _loadMembersData() async {
+    try {
+      final String jsonString = await rootBundle.loadString('assets/data/members.json');
+      final List<dynamic> jsonData = jsonDecode(jsonString);
+
+      nijidongList = jsonData.map((data) => IdolMember.fromJson(data)).toList();
+
+      // 가장 가까운 생일 인덱스를 찾아 첫 화면으로 설정
+      int nearestIndex = _getNearestBirthdayIndex();
+      _pageController = PageController(initialPage: nearestIndex);
+      _currentPageNotifier.value = nearestIndex;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      // 데이터 로드 완료 후 백그라운드 작업 시작
+      _startTimer();
+      _scheduleBirthdayNotifications();
+      if (nijidongList.isNotEmpty) {
+        _updateHomeWidget(nijidongList[nearestIndex]);
+      }
+    } catch (e) {
+      debugPrint('데이터를 불러오는데 실패했습니다: $e');
+    }
+  }
+
+  // 다가오는 가장 가까운 생일의 인덱스를 계산하는 함수
+  int _getNearestBirthdayIndex() {
+    if (nijidongList.isEmpty) return 0;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    int nearestIndex = 0;
+    int minDays = 9999;
+
+    for (int i = 0; i < nijidongList.length; i++) {
+      final member = nijidongList[i];
+      DateTime nextBirthday = DateTime(now.year, member.birthMonth, member.birthDay);
+
+      // 이미 생일이 지났다면 내년으로 계산
+      if (nextBirthday.isBefore(today)) {
+        nextBirthday = DateTime(now.year + 1, member.birthMonth, member.birthDay);
+      }
+
+      final difference = nextBirthday.difference(today).inDays;
+
+      if (difference < minDays) {
+        minDays = difference;
+        nearestIndex = i;
+      }
+    }
+    return nearestIndex;
+  }
+
+  // 1초마다 현재 시간을 갱신하는 타이머
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _currentTimeNotifier.value = DateTime.now();
     });
   }
 
-  List<Center> WidgetList() {
-    List<Center> res = [];
-    // 캐릭터 데이터 추가.
-    for (int i = 0; i < nijidongList.length; i++) {
-      Center box = Center(
-          child: Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                Image.asset(
-                    nijidongList[i]['image'],
-                    width: 1000,
-                    height: 1000,
-                    fit: BoxFit.cover,
-                    color: Color.fromRGBO(255, 255, 255, 0.5),
-                    colorBlendMode: BlendMode.modulate
-                ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Image.asset(
-                            nijidongList[i]['image']
-                        ),
-                        Text(
-                          '${nijidongList[i]['birthM']}월\n${nijidongList[i]['birthD']}일\n(${nijidongWeekday[i]})',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 45,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10.0),
-                    Text(
-                      diffBirth[i],
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 48,
-                      ),
-                    ),
-                  ],
-                ),
-              ]
-          )
-      );
-      res.add(box);
+  // D-Day 남은 시간을 계산하여 문자열로 반환하는 함수
+  String _getDDayString(IdolMember member, DateTime now) {
+    var birthday = DateTime(now.year, member.birthMonth, member.birthDay);
+    var difference = now.difference(birthday);
+
+    if (difference.inSeconds >= 0 && difference.inSeconds < 86400) {
+      return '생일이에요!\n축하합니다!';
     }
-    // 개인 프로필 추가.
-    Center box = Center(
-      child: Container(
-        alignment: Alignment(0.0, 0.0),
-        color: Color.fromARGB(255, 23, 63, 123),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Image.asset(
-                'assets/nijidong_yuu1@2x.png'
-            ),
-            Text(
-              'tomriddle7',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 45,
-              ),
-            ),
-            InkWell(
-              onTap: () async {
-                await launch('https://twitter.com/tomriddle7', forceWebView: true, enableJavaScript: true, forceSafariVC: true);
-              },
-              child: Text(
-                '@tomriddle7',
-                style: TextStyle(
-                  color: Colors.lightBlueAccent,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 32,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-    res.add(box);
-    return res;
+
+    if (difference.inSeconds >= 86400) {
+      birthday = DateTime(now.year + 1, member.birthMonth, member.birthDay);
+      difference = now.difference(birthday);
+    }
+
+    int diffDay = difference.inDays.abs();
+    int diffHour = 23 - (now.hour);
+    int diffMinute = 59 - (now.minute);
+    int diffSecond = 59 - (now.second);
+
+    return '${diffDay}일 ${diffHour.toString().padLeft(2, '0')}:${diffMinute.toString().padLeft(2, '0')}:${diffSecond.toString().padLeft(2, '0')}';
   }
 
-  _buildCircleIndicator() {
-    return Positioned(
-      left: 0.0,
-      right: 0.0,
-      bottom: 50.0,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: CirclePageIndicator(
-          dotColor: Colors.white70,
-          selectedDotColor: Colors.redAccent,
-          itemCount: nijidongList.length + 1,
-          currentPageNotifier: _currentPageNotifier,
+  // 홈 위젯 데이터 갱신 함수
+  Future<void> _updateHomeWidget(IdolMember member) async {
+    final now = DateTime.now();
+    final dDayString = _getDDayString(member, now).replaceAll('\n', ' ');
+
+    if (!kIsWeb) {
+      try {
+        await HomeWidget.saveWidgetData<String>('member_name', member.name);
+        await HomeWidget.saveWidgetData<String>('d_day_text', dDayString);
+
+        await HomeWidget.updateWidget(
+          androidName: 'DotgasakiWidgetProvider',
+          iOSName: 'DotgasakiWidget',
+        );
+      } on Exception catch (e) {
+        debugPrint('위젯 데이터 저장 실패: $e');
+      }
+    }
+  }
+
+  // 매년 반복되는 생일 축하 푸시 알림 예약 함수
+  Future<void> _scheduleBirthdayNotifications() async {
+    // 웹 환경에서는 로컬 네이티브 푸시를 스케줄링하지 않고 넘깁니다. (웹 빌드 충돌 방지)
+    if (kIsWeb) return;
+
+    for (int i = 0; i < nijidongList.length; i++) {
+      final member = nijidongList[i];
+      final now = tz.TZDateTime.now(tz.local);
+
+      var scheduledDate = tz.TZDateTime(tz.local, now.year, member.birthMonth, member.birthDay, 0, 0);
+
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = tz.TZDateTime(tz.local, now.year + 1, member.birthMonth, member.birthDay, 0, 0);
+      }
+
+      // v21 최신 문법에 맞춰 모든 인자를 Named Parameter로 변경하고,
+      // 삭제된 uiLocalNotificationDateInterpretation 파라미터를 제거했습니다.
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        id: i,
+        title: '오늘은 생일입니다!',
+        body: '니지동의 ${member.name} 멤버의 생일을 축하해주세요! 🎉',
+        scheduledDate: scheduledDate,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'birthday_channel', 'Birthday Notifications',
+            importance: Importance.max, priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
         ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.dateAndTime, // 매년 지정된 날짜/시간에 반복
+      );
+    }
+  }
+
+  // 하단 점(Dot) 인디케이터 위젯
+  Widget _buildCircleIndicator() {
+    return ValueListenableBuilder<int>(
+      valueListenable: _currentPageNotifier,
+      builder: (context, currentPage, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(nijidongList.length + 1, (index) {
+            bool isSelected = currentPage == index;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4.0),
+              width: isSelected ? 12.0 : 8.0,
+              height: isSelected ? 12.0 : 8.0,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? Colors.redAccent : Colors.white70,
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
+
+  // 개발자 프로필 페이지 위젯
+  Widget _buildProfilePage() {
+    return Container(
+      color: const Color.fromARGB(255, 23, 63, 123),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Image.asset('assets/images/nijidong_yuu1@2x.png'),
+          const Text(
+            'tomriddle7',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 45),
+          ),
+          InkWell(
+            onTap: () async {
+              final url = Uri.parse('https://x.com/tomriddle7');
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: const Text(
+              '@tomriddle7',
+              style: TextStyle(color: Colors.lightBlueAccent, fontWeight: FontWeight.w700, fontSize: 32),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    // 데이터 로딩 중 화면
+    if (isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.lightBlueAccent,
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.lightBlueAccent,
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Stack(
-          children: <Widget>[
-            PageView(
-              children: WidgetList(),
-              onPageChanged: (int index) {
-                _currentPageNotifier.value = index;
-              },
-            ),
-            _buildCircleIndicator(),
-          ],
-        ),
+      body: Stack(
+        children: <Widget>[
+          PageView.builder(
+            controller: _pageController,
+            itemCount: nijidongList.length + 1,
+            onPageChanged: (int index) {
+              _currentPageNotifier.value = index;
+              if (index < nijidongList.length) {
+                _updateHomeWidget(nijidongList[index]);
+              }
+            },
+            itemBuilder: (context, index) {
+              if (index == nijidongList.length) {
+                return _buildProfilePage();
+              }
+
+              final member = nijidongList[index];
+              final dummyDate = DateTime(2024, member.birthMonth, member.birthDay);
+              final weekdayStr = birthWeekday[dummyDate.weekday - 1];
+
+              return Stack(
+                alignment: Alignment.center,
+                fit: StackFit.expand,
+                children: <Widget>[
+                  Image.asset(
+                    member.image,
+                    fit: BoxFit.cover,
+                    color: const Color.fromRGBO(255, 255, 255, 0.5),
+                    colorBlendMode: BlendMode.modulate,
+                  ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Image.asset(member.image),
+                          Text(
+                            '${member.birthMonth}월\n${member.birthDay}일\n($weekdayStr)',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 45),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20.0),
+                      // 남은 시간 텍스트만 1초마다 부분 리렌더링
+                      ValueListenableBuilder<DateTime>(
+                        valueListenable: _currentTimeNotifier,
+                        builder: (context, now, child) {
+                          return Text(
+                            _getDDayString(member, now),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 48),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+          Positioned(
+            bottom: 50.0,
+            left: 0,
+            right: 0,
+            child: _buildCircleIndicator(),
+          ),
+        ],
       ),
     );
   }

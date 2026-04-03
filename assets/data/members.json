@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Nakasu Kasumi",
+    "month": 1,
+    "day": 23,
+    "image": "assets/images/nijidong_kasumi1@2x.png"
+  },
+  {
+    "name": "Emma Berde",
+    "month": 2,
+    "day": 5,
+    "image": "assets/images/nijidong_emma1@2x.png"
+  },
+  {
+    "name": "Zhoung Lanzhu",
+    "month": 2,
+    "day": 15,
+    "image": "assets/images/nijidong_lanzhu1@2x.png"
+  },
+  {
+    "name": "Uehara Ayumu",
+    "month": 3,
+    "day": 1,
+    "image": "assets/images/nijidong_ayumu1@2x.png"
+  },
+  {
+    "name": "Osaka Shizuku",
+    "month": 4,
+    "day": 3,
+    "image": "assets/images/nijidong_shizuku1@2x.png"
+  },
+  {
+    "name": "Miyashita Ai",
+    "month": 5,
+    "day": 30,
+    "image": "assets/images/nijidong_ai1@2x.png"
+  },
+  {
+    "name": "Asaka Karin",
+    "month": 6,
+    "day": 29,
+    "image": "assets/images/nijidong_karin1@2x.png"
+  },
+  {
+    "name": "Yuuki Setsuna",
+    "month": 8,
+    "day": 8,
+    "image": "assets/images/nijidong_setsuna1@2x.png"
+  },
+  {
+    "name": "Mifune Shioriko",
+    "month": 10,
+    "day": 5,
+    "image": "assets/images/nijidong_shioriko1@2x.png"
+  },
+  {
+    "name": "Tennoji Rina",
+    "month": 11,
+    "day": 13,
+    "image": "assets/images/nijidong_rina1@2x.png"
+  },
+  {
+    "name": "Mia Taylor",
+    "month": 12,
+    "day": 6,
+    "image": "assets/images/nijidong_mia1@2x.png"
+  },
+  {
+    "name": "Konoe Kanata",
+    "month": 12,
+    "day": 16,
+    "image": "assets/images/nijidong_kanata1@2x.png"
+  }
+]

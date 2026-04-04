@@ -1,34 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
 import 'dart:convert';
-import 'package:home_widget/home_widget.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:url_launcher/url_launcher.dart';
 
-// 로컬 알림 플러그인 전역 초기화
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+import 'notification_service_mobile.dart'
+if (dart.library.html) 'notification_service_web.dart';
 
 void main() async {
-  // 플러터 엔진과 위젯 바인딩 초기화 보장 (비동기 작업을 위해 필수)
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 타임존 및 알림 설정 초기화
   tz.initializeTimeZones();
-  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-  const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings();
-  const InitializationSettings initializationSettings = InitializationSettings(
-    android: initializationSettingsAndroid,
-    iOS: initializationSettingsIOS,
-  );
-  await flutterLocalNotificationsPlugin.initialize(
-    settings: initializationSettings,
-  );
+  tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
+
+  await initNotifications();
+  await checkAndShowBirthdayNotifications();
 
   runApp(const MyApp());
+}
+
+Future<void> checkAndShowBirthdayNotifications() async {
+  try {
+    final String response =
+    await rootBundle.loadString('assets/data/members.json');
+    final List<dynamic> data = json.decode(response);
+
+    DateTime now = DateTime.now();
+
+    for (var member in data) {
+      String name = member['name'];
+      String birthdayStr = member['birthday'];
+
+      List<String> dateParts = birthdayStr.split('-');
+      int month = int.parse(dateParts[dateParts.length - 2]);
+      int day = int.parse(dateParts.last);
+
+      if (now.month == month && now.day == day) {
+        await fireNotification(name);
+      }
+    }
+  } catch (e) {
+    debugPrint('데이터 불러오기 실패: $e');
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -40,34 +55,35 @@ class MyApp extends StatelessWidget {
       title: 'DotLive*',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true, // Material 3 최신 디자인 적용
+        useMaterial3: true,
       ),
       home: const MyHomePage(title: 'DotLive*'),
     );
   }
 }
 
-// 아이돌 멤버 데이터 모델
 class IdolMember {
   final String name;
   final int birthMonth;
   final int birthDay;
   final String image;
+  final String body;
 
   IdolMember({
     required this.name,
     required this.birthMonth,
     required this.birthDay,
     required this.image,
+    required this.body,
   });
 
-  // JSON 파싱용 팩토리 생성자
   factory IdolMember.fromJson(Map<String, dynamic> json) {
     return IdolMember(
       name: json['name'],
       birthMonth: json['month'],
       birthDay: json['day'],
       image: json['image'],
+      body: json['body'] ?? '${json['name']}의 생일을 축하해 주세요! 🎉',
     );
   }
 }
@@ -84,17 +100,18 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<String> birthWeekday = ['월', '화', '수', '목', '금', '토', '일'];
 
   List<IdolMember> nijidongList = [];
-  bool isLoading = true; // JSON 로딩 상태 관리
+  bool isLoading = true;
 
   late PageController _pageController;
   final ValueNotifier<int> _currentPageNotifier = ValueNotifier<int>(0);
-  final ValueNotifier<DateTime> _currentTimeNotifier = ValueNotifier<DateTime>(DateTime.now());
+  final ValueNotifier<DateTime> _currentTimeNotifier =
+  ValueNotifier<DateTime>(DateTime.now());
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _loadMembersData(); // 비동기로 데이터 불러오기 시작
+    _loadMembersData();
   }
 
   @override
@@ -106,15 +123,15 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-  // JSON 파일에서 데이터를 읽어오고 초기 설정을 진행하는 함수
   Future<void> _loadMembersData() async {
     try {
-      final String jsonString = await rootBundle.loadString('assets/data/members.json');
+      final String jsonString =
+      await rootBundle.loadString('assets/data/members.json');
       final List<dynamic> jsonData = jsonDecode(jsonString);
 
-      nijidongList = jsonData.map((data) => IdolMember.fromJson(data)).toList();
+      nijidongList =
+          jsonData.map((data) => IdolMember.fromJson(data)).toList();
 
-      // 가장 가까운 생일 인덱스를 찾아 첫 화면으로 설정
       int nearestIndex = _getNearestBirthdayIndex();
       _pageController = PageController(initialPage: nearestIndex);
       _currentPageNotifier.value = nearestIndex;
@@ -123,18 +140,13 @@ class _MyHomePageState extends State<MyHomePage> {
         isLoading = false;
       });
 
-      // 데이터 로드 완료 후 백그라운드 작업 시작
       _startTimer();
       _scheduleBirthdayNotifications();
-      if (nijidongList.isNotEmpty) {
-        _updateHomeWidget(nijidongList[nearestIndex]);
-      }
     } catch (e) {
       debugPrint('데이터를 불러오는데 실패했습니다: $e');
     }
   }
 
-  // 다가오는 가장 가까운 생일의 인덱스를 계산하는 함수
   int _getNearestBirthdayIndex() {
     if (nijidongList.isEmpty) return 0;
 
@@ -146,11 +158,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
     for (int i = 0; i < nijidongList.length; i++) {
       final member = nijidongList[i];
-      DateTime nextBirthday = DateTime(now.year, member.birthMonth, member.birthDay);
+      DateTime nextBirthday =
+      DateTime(now.year, member.birthMonth, member.birthDay);
 
-      // 이미 생일이 지났다면 내년으로 계산
       if (nextBirthday.isBefore(today)) {
-        nextBirthday = DateTime(now.year + 1, member.birthMonth, member.birthDay);
+        nextBirthday =
+            DateTime(now.year + 1, member.birthMonth, member.birthDay);
       }
 
       final difference = nextBirthday.difference(today).inDays;
@@ -163,14 +176,12 @@ class _MyHomePageState extends State<MyHomePage> {
     return nearestIndex;
   }
 
-  // 1초마다 현재 시간을 갱신하는 타이머
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _currentTimeNotifier.value = DateTime.now();
     });
   }
 
-  // D-Day 남은 시간을 계산하여 문자열로 반환하는 함수
   String _getDDayString(IdolMember member, DateTime now) {
     var birthday = DateTime(now.year, member.birthMonth, member.birthDay);
     var difference = now.difference(birthday);
@@ -185,69 +196,37 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     int diffDay = difference.inDays.abs();
-    int diffHour = 23 - (now.hour);
-    int diffMinute = 59 - (now.minute);
-    int diffSecond = 59 - (now.second);
+    int diffHour = 23 - now.hour;
+    int diffMinute = 59 - now.minute;
+    int diffSecond = 59 - now.second;
 
     return '${diffDay}일 ${diffHour.toString().padLeft(2, '0')}:${diffMinute.toString().padLeft(2, '0')}:${diffSecond.toString().padLeft(2, '0')}';
   }
 
-  // 홈 위젯 데이터 갱신 함수
-  Future<void> _updateHomeWidget(IdolMember member) async {
-    final now = DateTime.now();
-    final dDayString = _getDDayString(member, now).replaceAll('\n', ' ');
-
-    if (!kIsWeb) {
-      try {
-        await HomeWidget.saveWidgetData<String>('member_name', member.name);
-        await HomeWidget.saveWidgetData<String>('d_day_text', dDayString);
-
-        await HomeWidget.updateWidget(
-          androidName: 'DotgasakiWidgetProvider',
-          iOSName: 'DotgasakiWidget',
-        );
-      } on Exception catch (e) {
-        debugPrint('위젯 데이터 저장 실패: $e');
-      }
-    }
-  }
-
-  // 매년 반복되는 생일 축하 푸시 알림 예약 함수
   Future<void> _scheduleBirthdayNotifications() async {
-    // 웹 환경에서는 로컬 네이티브 푸시를 스케줄링하지 않고 넘깁니다. (웹 빌드 충돌 방지)
-    if (kIsWeb) return;
-
     for (int i = 0; i < nijidongList.length; i++) {
       final member = nijidongList[i];
       final now = tz.TZDateTime.now(tz.local);
 
-      var scheduledDate = tz.TZDateTime(tz.local, now.year, member.birthMonth, member.birthDay, 0, 0);
+      var scheduledDate = tz.TZDateTime(
+          tz.local, now.year, member.birthMonth, member.birthDay, 0, 0);
 
       if (scheduledDate.isBefore(now)) {
-        scheduledDate = tz.TZDateTime(tz.local, now.year + 1, member.birthMonth, member.birthDay, 0, 0);
+        scheduledDate = tz.TZDateTime(
+            tz.local, now.year + 1, member.birthMonth, member.birthDay, 0, 0);
       }
 
-      // v21 최신 문법에 맞춰 모든 인자를 Named Parameter로 변경하고,
-      // 삭제된 uiLocalNotificationDateInterpretation 파라미터를 제거했습니다.
-      await flutterLocalNotificationsPlugin.zonedSchedule(
+      // ✨ 변경된 부분: JSON에서 파싱해 온 body와 image 변수를 바로 넣습니다.
+      await scheduleNotification(
         id: i,
-        title: '오늘은 생일입니다!',
-        body: '니지동의 ${member.name} 멤버의 생일을 축하해주세요! 🎉',
+        title: '생일 축하해, ${member.name}!🎂', // 타이틀도 원하시면 JSON으로 뺄 수 있어요!
+        body: member.body,        // members.json에서 가져온 고유 텍스트
+        imagePath: member.image,  // members.json에서 가져온 이미지 경로
         scheduledDate: scheduledDate,
-        notificationDetails: const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'birthday_channel', 'Birthday Notifications',
-            importance: Importance.max, priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.dateAndTime, // 매년 지정된 날짜/시간에 반복
       );
     }
   }
 
-  // 하단 점(Dot) 인디케이터 위젯
   Widget _buildCircleIndicator() {
     return ValueListenableBuilder<int>(
       valueListenable: _currentPageNotifier,
@@ -272,7 +251,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  // 개발자 프로필 페이지 위젯
   Widget _buildProfilePage() {
     return Container(
       color: const Color.fromARGB(255, 23, 63, 123),
@@ -282,7 +260,10 @@ class _MyHomePageState extends State<MyHomePage> {
           Image.asset('assets/images/nijidong_yuu1@2x.png'),
           const Text(
             'tomriddle7',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 45),
+            style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 45),
           ),
           InkWell(
             onTap: () async {
@@ -293,7 +274,10 @@ class _MyHomePageState extends State<MyHomePage> {
             },
             child: const Text(
               '@tomriddle7',
-              style: TextStyle(color: Colors.lightBlueAccent, fontWeight: FontWeight.w700, fontSize: 32),
+              style: TextStyle(
+                  color: Colors.lightBlueAccent,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 32),
             ),
           ),
         ],
@@ -303,7 +287,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // 데이터 로딩 중 화면
     if (isLoading) {
       return const Scaffold(
         backgroundColor: Colors.lightBlueAccent,
@@ -322,9 +305,6 @@ class _MyHomePageState extends State<MyHomePage> {
             itemCount: nijidongList.length + 1,
             onPageChanged: (int index) {
               _currentPageNotifier.value = index;
-              if (index < nijidongList.length) {
-                _updateHomeWidget(nijidongList[index]);
-              }
             },
             itemBuilder: (context, index) {
               if (index == nijidongList.length) {
@@ -332,7 +312,8 @@ class _MyHomePageState extends State<MyHomePage> {
               }
 
               final member = nijidongList[index];
-              final dummyDate = DateTime(2024, member.birthMonth, member.birthDay);
+              final dummyDate =
+              DateTime(2024, member.birthMonth, member.birthDay);
               final weekdayStr = birthWeekday[dummyDate.weekday - 1];
 
               return Stack(
@@ -354,18 +335,23 @@ class _MyHomePageState extends State<MyHomePage> {
                           Image.asset(member.image),
                           Text(
                             '${member.birthMonth}월\n${member.birthDay}일\n($weekdayStr)',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 45),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 45),
                           ),
                         ],
                       ),
                       const SizedBox(height: 20.0),
-                      // 남은 시간 텍스트만 1초마다 부분 리렌더링
                       ValueListenableBuilder<DateTime>(
                         valueListenable: _currentTimeNotifier,
                         builder: (context, now, child) {
                           return Text(
                             _getDDayString(member, now),
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 48),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 48),
                           );
                         },
                       ),

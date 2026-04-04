@@ -1,74 +1,86 @@
 [
   {
-    "name": "Nakasu Kasumi",
+    "name": "나카스 카스미",
     "month": 1,
     "day": 23,
-    "image": "assets/images/nijidong_kasumi1@2x.png"
+    "image": "assets/images/nijidong_kasumi1@2x.png",
+    "body": "세상에서 제일 귀여운 카스밍의 생일이에요! 오늘은 카스미를 듬뿍 예뻐해 주실 거죠? 👑💛"
   },
   {
-    "name": "Emma Berde",
+    "name": "엠마 베르데",
     "month": 2,
     "day": 5,
-    "image": "assets/images/nijidong_emma1@2x.png"
+    "image": "assets/images/nijidong_emma1@2x.png",
+    "body": "포근한 스위스 걸, 엠마의 생일이에요! 마이무가 되어 엠마의 빵을 함께 나눠 먹어볼까요? 🍞💚"
   },
   {
-    "name": "Zhoung Lanzhu",
+    "name": "쇼우 란쥬",
     "month": 2,
     "day": 15,
-    "image": "assets/images/nijidong_lanzhu1@2x.png"
+    "image": "assets/images/nijidong_lanzhu1@2x.png",
+    "body": "우후훗! 오늘은 무적의 란쥬님 생일이라구! 모두 모여서 성대하게 축하해 주지 않을래? 👑💖"
   },
   {
-    "name": "Uehara Ayumu",
+    "name": "우에하라 아유무",
     "month": 3,
     "day": 1,
-    "image": "assets/images/nijidong_ayumu1@2x.png"
+    "image": "assets/images/nijidong_ayumu1@2x.png",
+    "body": "아유무의 생일이 찾아왔어요! 핑크빛 하루를 응원해 주세요! 🎀"
   },
   {
-    "name": "Osaka Shizuku",
+    "name": "오사카 시즈쿠",
     "month": 4,
     "day": 3,
-    "image": "assets/images/nijidong_shizuku1@2x.png"
+    "image": "assets/images/nijidong_shizuku1@2x.png",
+    "body": "이상적인 히로인을 꿈꾸는 시즈쿠의 생일입니다! 오늘만큼은 시즈쿠가 최고의 주인공이에요! 💧🎭"
   },
   {
-    "name": "Miyashita Ai",
+    "name": "미야시타 아이",
     "month": 5,
     "day": 30,
-    "image": "assets/images/nijidong_ai1@2x.png"
+    "image": "assets/images/nijidong_ai1@2x.png",
+    "body": "모두의 비타민, 아이상의 생일이 떴다-! 오늘 하루도 아이(愛)가 넘치게 텐션 올려볼까?! 🤟🧡"
   },
   {
-    "name": "Asaka Karin",
+    "name": "아사카 카린",
     "month": 6,
     "day": 29,
-    "image": "assets/images/nijidong_karin1@2x.png"
+    "image": "assets/images/nijidong_karin1@2x.png",
+    "body": "어른스럽고 매력적인 카린의 생일! 하지만 오늘은 조금 어리광 부려도 괜찮지 않을까요? 👠💙"
   },
   {
-    "name": "Yuuki Setsuna",
+    "name": "유키 세츠나",
     "month": 8,
     "day": 8,
-    "image": "assets/images/nijidong_setsuna1@2x.png"
+    "image": "assets/images/nijidong_setsuna1@2x.png",
+    "body": "'정말 좋아해'를 가득 모아! 세츠나의 생일입니다! 오늘도 불타오르는 열정으로 함께 야망을 이뤄봐요! 🎙️🔥"
   },
   {
-    "name": "Mifune Shioriko",
+    "name": "미후네 시오리코",
     "month": 10,
     "day": 5,
-    "image": "assets/images/nijidong_shioriko1@2x.png"
+    "image": "assets/images/nijidong_shioriko1@2x.png",
+    "body": "올바른 길로 이끄는 시오리코의 생일입니다. 오늘 하루는 딱딱한 규칙은 잊고 함께 즐겨주실 거죠? 🔖🌿"
   },
   {
-    "name": "Tennoji Rina",
+    "name": "텐노지 리나",
     "month": 11,
     "day": 13,
-    "image": "assets/images/nijidong_rina1@2x.png"
+    "image": "assets/images/nijidong_rina1@2x.png",
+    "body": "리나쨩 보드 '두근두근'! 오늘은 리나의 생일이야. 축하해 주면 정말 기쁠 것 같아. 📶🩷"
   },
   {
-    "name": "Mia Taylor",
+    "name": "미아 테일러",
     "month": 12,
     "day": 6,
-    "image": "assets/images/nijidong_mia1@2x.png"
+    "image": "assets/images/nijidong_mia1@2x.png",
+    "body": "Hey, boy! 오늘은 미아의 생일이야. 특별히 내 노래를 들려줄 테니까 축하하러 오라고! ⚾🍔"
   },
   {
-    "name": "Konoe Kanata",
+    "name": "코노에 카나타",
     "month": 12,
     "day": 16,
-    "image": "assets/images/nijidong_kanata1@2x.png"
+    "image": "assets/images/nijidong_kanata1@2x.png",
+    "body": "쿨쿨... 카나타쨩의 생일이야... 푹 자고 일어난 카나타를 축하해 주러 올 거지? 🐏💤"
   }
 ]
